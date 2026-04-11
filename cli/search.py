@@ -1,19 +1,37 @@
+#next up: tokenization
+
+#always source .venv/bin/activate
 import json
-from pathlib import Path
+import string
+from search_utils import DEFAULT_SEARCH_LIMIT, load_movies
 
-def search_movie(search_word):
-    search_list = []
-    script_dir = Path(__file__).parent
-    datei = script_dir.parent / "data" / "movies.json"
-    with open(datei, 'r', encoding='utf-8') as file:
-        movie_data = json.load(file)
+def tokenize(query: str) -> list[str]:
+    # input string, split, clean and put in list
+    # .split() on whitespace
+    # Remove any empty tokens
+    pass
 
-    for movie in movie_data["movies"]:
-        if search_word in movie["title"]:
-            search_list.append(movie["title"])
+def search_command(search_word: str, list_limit: int = DEFAULT_SEARCH_LIMIT) -> list[dict]:
+    search_result = []
+    
+    remove_punctuation = str.maketrans("", "", string.punctuation)
+    
+    # make translation table, delete all punctuations:
+    # string.punctuation = !"#$%&'()*+,-./:;<=>?@[]^_`{|}~\
+    # make translation table, e.g. str.maketrans(from, to, delete)
+    # str.maketrans("aeiou", "AEIOU", "!?.")
 
-    top_5 = search_list[0:5]
-    return top_5
+    cleaned_search_word = search_word.translate(remove_punctuation).lower()
+    
 
-#print(search_movie("Alien"))
-#print(search_movie("SideFX"))
+
+    movie_data = load_movies()
+    # search movie titles: cleaned search word and cleaned movie title
+    for movie in movie_data:
+        cleaned_title = movie["title"].translate(remove_punctuation).lower()
+        if cleaned_search_word in cleaned_title:
+            search_result.append(movie)
+            if len(search_result) >= list_limit:
+                break
+
+    return search_result
