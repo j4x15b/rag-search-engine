@@ -2,7 +2,7 @@
 
 RAG Search Engine | Python, LLMs, Vector Search
 
-Built a semantic search engine powering a Netflix-like streaming service as part of Boot.dev's RAG course. The project covers the full Retrieval Augmented Generation pipeline:
+Building a semantic search engine powering a Netflix-like streaming service as part of Boot.dev's RAG course. The project covers the full Retrieval Augmented Generation pipeline:
 
 Ingesting and indexing a real movie dataset
 Implementing semantic search using vector embeddings
