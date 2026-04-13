@@ -30,6 +30,6 @@ use cli to search a movie title, prints out top 5 hits from /data/movies.json
 
 use:
 
-uv run keyword_search_cli.py <search_query>
+uv run keyword_search_cli.py <search_query> <--quantity (default=5)>
 ##########################################
 
