@@ -3,11 +3,15 @@
 #always source .venv/bin/activate
 import json
 import string
-from search_utils import DEFAULT_SEARCH_LIMIT, load_movies, load_stopwords
+from search_utils import DEFAULT_SEARCH_LIMIT, load_movies, load_stopwords, project_root, create_subfolder
 from nltk.stem import PorterStemmer
 
+def test_text(text: str) -> str:
+    return clean(text)
+
 def clean(query: str) -> str:
-    remove_punctuation = str.maketrans("", "", string.punctuation)
+    #remove_punctuation = str.maketrans("", "", string.punctuation)
+    remove_punctuation = str.maketrans(string.punctuation, ' ' * len(string.punctuation))
     # make translation table, delete all punctuations:
     # string.punctuation = !"#$%&'()*+,-./:;<=>?@[]^_`{|}~\
     # make translation table, e.g. str.maketrans(from, to, delete)
@@ -47,8 +51,7 @@ def stem(query: list[str]) -> list[str]:
 def search_command(query: str, list_limit: int = DEFAULT_SEARCH_LIMIT) -> list[dict]:
     search_result = []
     
-    # Reihenfolge:
-    #CLEAN, TOKENIZE, FILTER STOPWORDS, STEM
+    # order: CLEAN, TOKENIZE, FILTER STOPWORDS, STEM
 
     # clean from punctuation and space
     cleaned_query = clean(query)
@@ -65,7 +68,7 @@ def search_command(query: str, list_limit: int = DEFAULT_SEARCH_LIMIT) -> list[d
         tokenized_title = tokenize(cleaned_title)
         filtered_tokenized_title = remove_stopwords(tokenized_title)
         stemmed_filtered_tokenized_title = stem(filtered_tokenized_title)
-        #print(stemmed_filtered_tokenized_title)
+        
         for token in stemmed_tokenized_query:
             if token in stemmed_filtered_tokenized_title:
                 search_result.append(movie)
@@ -74,3 +77,48 @@ def search_command(query: str, list_limit: int = DEFAULT_SEARCH_LIMIT) -> list[d
             break
 
     return search_result
+
+
+class InvertedIndex():
+    def __init__(self):
+        self.index = {} #a dictionary mapping tokens (strings) to sets of document IDs (integers)
+        self.docmap = {} #a dictionary mapping document IDs to their full document objects.
+        print("Objekt succesfully created")
+
+    def __add_document(self, doc_id, text):
+        pass
+        print("__add_document method")
+        # Tokenize the input text, then add each token to the index with the document ID.
+        cleaned_text = clean(text)
+        tokenized_text = tokenize(cleaned_text)
+        for token in tokenized_text:
+            #print(token)
+            self.index[token] = doc_id
+        print("end_add_document_method")
+    def get_document(self, doc_id, text):
+        pass
+        #It should get the set of document IDs for a given token, and return them as a list, 
+        # sorted in ascending order. For our purposes, you can assume that the input term is a 
+        # single word/token – though you may still want to lowercase it for good measure.
+    def build(self):
+        print("building inverted index method")
+        movie_data = load_movies()
+        for movie in movie_data:
+            id = movie['id']
+            movie_text = f"{movie['title']} {movie['description']}"
+            self.__add_document(id, movie_text)
+        # It should iterate over all the movies and add them to both the index and the docmap.
+        # When adding the movie data to the index with __add_document(), concatenate the title and the 
+        # description and use that as the input text. For example:
+        # f"{m['title']} {m['description']}"
+    def save(self):
+        
+        #  should save the index and docmap attributes to disk using the pickle module's dump function.
+        # Use the file path/name cache/index.pkl for the index.
+        # Use the file path/name cache/docmap.pkl for the docmap.
+        # Have this method create the cache directory if it doesn't exist (before trying to write files into it).
+        print("saving file method")
+        #cache_folder = project_root / "cache"
+        #if not cache_folder:
+        create_subfolder("cache")
+        
