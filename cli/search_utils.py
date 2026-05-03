@@ -20,7 +20,7 @@ def create_subfolder(folder_name: str) -> bool:
     else:
         print(f"creating folder: {folder_name}")
         target.mkdir()
-        return True
+        return False
 
 # load  movie data base
 @lru_cache(maxsize=None)

@@ -5,6 +5,7 @@ import json
 import string
 from search_utils import DEFAULT_SEARCH_LIMIT, load_movies, load_stopwords, project_root, create_subfolder
 from nltk.stem import PorterStemmer
+import pickle
 
 def test_text(text: str) -> str:
     return clean(text)
@@ -84,6 +85,10 @@ class InvertedIndex():
         self.index = {} #a dictionary mapping tokens (strings) to sets of document IDs (integers)
         self.docmap = {} #a dictionary mapping document IDs to their full document objects.
         print("Objekt succesfully created")
+        self.index['Test1'] = 1
+        self.index['Test2'] = 2
+        self.docmap["Hello"] = 'Test'
+        self.docmap["Test"] = 'Test_One_Two'
 
     def __add_document(self, doc_id, text):
         pass
@@ -112,13 +117,47 @@ class InvertedIndex():
         # description and use that as the input text. For example:
         # f"{m['title']} {m['description']}"
     def save(self):
-        
         #  should save the index and docmap attributes to disk using the pickle module's dump function.
         # Use the file path/name cache/index.pkl for the index.
         # Use the file path/name cache/docmap.pkl for the docmap.
         # Have this method create the cache directory if it doesn't exist (before trying to write files into it).
         print("saving file method")
-        #cache_folder = project_root / "cache"
-        #if not cache_folder:
-        create_subfolder("cache")
+        
+        if create_subfolder("cache"):
+            print("Folder already exists")
+        else:
+            print("Cache folder created")
+        index_path = project_root / "cache" / "index.pkl"
+        docmap_path = project_root / "cache" / "docmap.pkl"
+        if index_path.exists() or docmap_path.exists():
+            loop = True
+            while loop:
+                overwrite_choice = input("Overwrite? (y/n): ").lower()
+                if overwrite_choice == "y":
+                    loop = False
+                    try:
+                        with open(index_path, 'wb') as file:
+                            pickle.dump(self.index, file)
+                        with open(docmap_path, 'wb') as file:
+                            pickle.dump(self.docmap, file)
+                    except IOError as e:
+                        print(f"Error saving file: {e}")
+
+                elif overwrite_choice == "n":
+                    loop = False
+                    print("Saving proces aborted")
+        else:
+            try:
+                with open(index_path, 'wb') as file:
+                    pickle.dump(self.index, file)
+                with open(docmap_path, 'wb') as file:
+                    pickle.dump(self.docmap, file)
+            except IOError as e:
+                print(f"Error saving file: {e}")
+
+        with open(index_path, 'rb') as file:
+            a = pickle.load(file)
+        print(a)
+
+
         
