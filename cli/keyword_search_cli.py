@@ -37,11 +37,19 @@ def main() -> None:
             inverted_index.build()
             inverted_index.save()
             print(inverted_index.index)
+            test_list = inverted_index.get_document('merida')
+            print(test_list)
         
         case "test":
-            print("Testing")
-            print(test_text("Hello.How are you?Good."))
-        
+            pass
+            # print("Testing")
+            # inverted_index = InvertedIndex()
+            # inverted_index.add_document(20000000000000000000, "Hello, how are you, you and you?")
+            # inverted_index.add_document(3, "This is how it's gonna be.")
+            # inverted_index.add_document(1, "Is this how it's gonna be with you and me?")
+            # print(inverted_index.get_document('how'))
+            #inverted_index = InvertedIndex()
+
         case "save":
             print("Saving")
             inverted_index = InvertedIndex()
