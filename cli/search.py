@@ -7,6 +7,8 @@ from search_utils import DEFAULT_SEARCH_LIMIT, load_movies, load_stopwords, proj
 from nltk.stem import PorterStemmer
 import pickle
 
+
+
 def test_text(text: str) -> str:
     return clean(text)
 
@@ -23,7 +25,6 @@ def clean(query: str) -> str:
 
 def remove_stopwords(query_tokens: list[str]) -> list[str]:
     filtered_tokens = []
-    stopwords = load_stopwords()
     for token in query_tokens:
         if token not in stopwords:
             filtered_tokens.append(token)
@@ -43,40 +44,40 @@ def tokenize(query: str) -> list[str]:
 
 def stem(query: list[str]) -> list[str]:
     stemmed_list = []
-    stemmer = PorterStemmer()
     for word in query:
         stemmed_list.append(stemmer.stem(word))
 
     return stemmed_list
 
-def search_command(query: str, list_limit: int = DEFAULT_SEARCH_LIMIT) -> list[dict]:
-    search_result = []
-    
+def text_pipeline(text: str) -> list[str]:
     # order: CLEAN, TOKENIZE, FILTER STOPWORDS, STEM
+    text = clean(text)
+    tokens = tokenize(text)
+    tokens = remove_stopwords(tokens)
+    tokens = stem(tokens)
 
-    # clean from punctuation and space
-    cleaned_query = clean(query)
-    # tokenize
-    tokenized_query = tokenize(cleaned_query)
-    # removing_stopwords
-    filtered_tokenized_query = remove_stopwords(tokenized_query)
-    # stemming
-    stemmed_tokenized_query = stem(filtered_tokenized_query)
-    movie_data = load_movies()
-    # search movie titles: cleaned search word and cleaned movie title
-    for movie in movie_data:
-        cleaned_title = clean(movie["title"])
-        tokenized_title = tokenize(cleaned_title)
-        filtered_tokenized_title = remove_stopwords(tokenized_title)
-        stemmed_filtered_tokenized_title = stem(filtered_tokenized_title)
-        
-        for token in stemmed_tokenized_query:
-            if token in stemmed_filtered_tokenized_title:
-                search_result.append(movie)
-                break
-        if len(search_result) >= list_limit:
-            break
+    return tokens
 
+
+def search_command(inverted_index, query: str, list_limit: int = DEFAULT_SEARCH_LIMIT) -> list[dict]:
+    
+    query = text_pipeline(query)
+    # movie_list = load_movies()
+    # movie_id_index = {movie["id"]: movie for movie in movie_list}
+
+    print(query)
+    result_set = set()
+    search_result = []
+
+    for token in query:
+        print(token)
+        for doc_id in inverted_index.get_document(token):
+            if doc_id in result_set:
+                continue
+            result_set.add(doc_id)
+            search_result.append(inverted_index.docmap[doc_id]["title"])
+            if len(search_result) >= list_limit:
+                return search_result
     return search_result
 
 
@@ -84,21 +85,31 @@ class InvertedIndex():
     def __init__(self): #OK
         self.index = {} #a dictionary mapping tokens (strings) to sets of document IDs (integers)
         self.docmap = {} #a dictionary mapping document IDs to their full document objects.
+        self.index_path = project_root / "cache" / "index.pkl"
+        self.docmap_path = project_root / "cache" / "docmap.pkl"
         print("Objekt succesfully created")
-
+    
+    def load(self):        
+        #load index-file
+    
+        with open(self.index_path, 'rb') as file:
+            f = pickle.load(file)
+            self.index = f
+        #load docmap-file
+        with open(self.docmap_path, 'rb') as file:
+            f = pickle.load(file)
+            self.docmap = f
+                
     def add_document(self, doc_id, text): #TODO
-        #print("__add_document method")
-        # Tokenize the input text, then add each token to the index with the document ID.
-        cleaned_text = clean(text)
-        tokenized_text = tokenize(cleaned_text)
-
-        for token in tokenized_text:
-            self.index.setdefault(token, set()).add(doc_id)
-            # same as:
-            # if token in self.index:
-            #     self.index[token].add(doc_id)
-            # else:
-            #     self.index[token] = {doc_id}
+        text = text_pipeline(text)
+        
+        for token in text:
+            #self.index.setdefault(token, set()).add(doc_id)
+            #same as:
+            if token in self.index:
+                self.index[token].add(doc_id)
+            else:
+                self.index[token] = {doc_id}
 
         #print("end_add_document_method")
         #print(self.index)
@@ -106,24 +117,25 @@ class InvertedIndex():
 
     def get_document(self, term): #TODO
         
-        sorted_term_list = []
-        if self.index[term]:
-            sorted_term_list = sorted(list(self.index[term]))
-                    
-        return sorted_term_list
+        sorted_movie_id_list = []
+        if term in self.index:
+            return sorted(list(self.index[term]))
+        else: 
+            return []
         #It should get the set of document IDs for a given token, and return them as a list, 
         # sorted in ascending order. For our purposes, you can assume that the input term is a 
         # single word/token – though you may still want to lowercase it for good measure.
 
     def build(self): 
         #OK
-        print("building inverted index method")
+        print("Building index and Docmap")
         movie_data = load_movies()
         # movie_data is a list of dicts{'id', 'title', 'description'}
         for movie in movie_data:
-            id = movie['id']
+            doc_id = movie['id']
             movie_text = f"{movie['title']} {movie['description']}"
-            self.add_document(id, movie_text)
+            self.docmap[doc_id] = movie
+            self.add_document(doc_id, movie_text)
         # It should iterate over all the movies and add them to both the index and the docmap.
         # When adding the movie data to the index with __add_document(), concatenate the title and the 
         # description and use that as the input text. For example:
@@ -135,15 +147,14 @@ class InvertedIndex():
         # Use the file path/name cache/docmap.pkl for the docmap.
         # Have this method create the cache directory if it doesn't exist (before trying to write files into it).
         print("saving file method")
+
+        # if create_subfolder("cache"):
+        #     print("Folder already exists")
+        # else:
+        #     print("Cache folder created")
         
-        if create_subfolder("cache"):
-            print("Folder already exists")
-        else:
-            print("Cache folder created")
-        index_path = project_root / "cache" / "index.pkl"
-        docmap_path = project_root / "cache" / "docmap.pkl"
-        if index_path.exists() or docmap_path.exists():
-            loop = True
+        #if self.index_path.exists() or self.docmap_path.exists():
+            # loop = True
         #     while loop:
         #         overwrite_choice = input("Overwrite? (y/n): ").lower()
         #         if overwrite_choice == "y":
@@ -160,16 +171,16 @@ class InvertedIndex():
         #             loop = False
         #             print("Saving process aborted")
         # else:
-            try:
-                with open(index_path, 'wb') as file:
-                    pickle.dump(self.index, file)
-                with open(docmap_path, 'wb') as file:
-                    pickle.dump(self.docmap, file)
-            except IOError as e:
-                print(f"Error saving file: {e}")
-
-        with open(index_path, 'rb') as file:
-            a = pickle.load(file)
+        try:
+            with open(self.index_path, 'wb') as file:
+                pickle.dump(self.index, file)
+            with open(self.docmap_path, 'wb') as file:
+                pickle.dump(self.docmap, file)
+        except IOError as e:
+            print(f"Error saving file: {e}")
 
 
         
+#CALLS: only once by executing search.py
+stopwords = load_stopwords()
+stemmer = PorterStemmer()

@@ -34,4 +34,3 @@ def load_stopwords(): # -> set(str)
     with open(stopwords_data_path, 'r', encoding='utf-8') as file:
         stopword_set = frozenset(line.strip() for line in file)
     return stopword_set
-

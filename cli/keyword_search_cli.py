@@ -26,10 +26,19 @@ def main() -> None:
 
     match args.command:
         case "search":
+            inverted_index = InvertedIndex()
+            try:
+                inverted_index.load()
+            except FileNotFoundError:
+                print("No index found. Run 'build' first.")
+                return
+            print(f"{len(inverted_index.index)} items in index")
             print(f"Searching for: {args.query}")
-            search_result = search_command(args.query, args.search_limit)
-            for i, result in enumerate(search_result, 1):
-                print(f"{i}. {result['title']}")       
+            search_result = search_command(inverted_index, args.query, args.search_limit)
+
+            if search_result:
+                for i, search_result in enumerate(search_result, 1):
+                    print(f"{i}. {search_result}")
         # case _ : else
         case "build":
             print(f"Building inverted index")
@@ -41,9 +50,12 @@ def main() -> None:
             print(test_list)
         
         case "test":
-            pass
+            inverted_index = InvertedIndex()
+            inverted_index.build()
+            print(inverted_index.index)
+            print(inverted_index.docmap)
             # print("Testing")
-            # inverted_index = InvertedIndex()
+            
             # inverted_index.add_document(20000000000000000000, "Hello, how are you, you and you?")
             # inverted_index.add_document(3, "This is how it's gonna be.")
             # inverted_index.add_document(1, "Is this how it's gonna be with you and me?")
