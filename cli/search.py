@@ -6,6 +6,7 @@ import string
 from search_utils import DEFAULT_SEARCH_LIMIT, load_movies, load_stopwords, project_root, create_subfolder
 from nltk.stem import PorterStemmer
 import pickle
+from collections import Counter
 
 
 
@@ -58,6 +59,13 @@ def text_pipeline(text: str) -> list[str]:
 
     return tokens
 
+def single_term_tokenizer(text: str) -> list[str]:
+    if len(text.split()) > 1:
+        raise Exception("Only one word allowed")
+    else:
+        tokenized_term_list = text_pipeline(text)
+        term = " ".join(tokenized_term_list)
+        return term
 
 def search_command(inverted_index, query: str, list_limit: int = DEFAULT_SEARCH_LIMIT) -> list[dict]:
     
@@ -85,8 +93,10 @@ class InvertedIndex():
     def __init__(self): #OK
         self.index = {} #a dictionary mapping tokens (strings) to sets of document IDs (integers)
         self.docmap = {} #a dictionary mapping document IDs to their full document objects.
+        self.term_frequencies = {}
         self.index_path = project_root / "cache" / "index.pkl"
         self.docmap_path = project_root / "cache" / "docmap.pkl"
+        self.term_frequencies_path = project_root / "cache" / "term_frequencies.pkl"
         print("Objekt succesfully created")
     
     def load(self):        
@@ -99,11 +109,17 @@ class InvertedIndex():
         with open(self.docmap_path, 'rb') as file:
             f = pickle.load(file)
             self.docmap = f
+        with open(self.term_frequencies_path, 'rb') as file:
+            f = pickle.load(file)
+            self.term_frequencies = f
                 
     def add_document(self, doc_id, text): #TODO
         text = text_pipeline(text)
+        if doc_id not in self.term_frequencies:
+            self.term_frequencies[doc_id] = Counter()
         
         for token in text:
+            self.term_frequencies[doc_id][token] += 1
             #self.index.setdefault(token, set()).add(doc_id)
             #same as:
             if token in self.index:
@@ -176,10 +192,13 @@ class InvertedIndex():
                 pickle.dump(self.index, file)
             with open(self.docmap_path, 'wb') as file:
                 pickle.dump(self.docmap, file)
+            with open(self.term_frequencies_path, 'wb') as file:
+                pickle.dump(self.term_frequencies, file)
         except IOError as e:
             print(f"Error saving file: {e}")
 
-
+    def get_tf(self, doc_id, term):
+        return self.term_frequencies[doc_id][term]
         
 #CALLS: only once by executing search.py
 stopwords = load_stopwords()

@@ -4,6 +4,7 @@ import argparse
 from search import search_command
 from search import InvertedIndex
 from search import test_text
+from search import single_term_tokenizer
 
 def prepare_parser():
     parser = argparse.ArgumentParser(description="Keyword Search CLI")
@@ -14,8 +15,12 @@ def prepare_parser():
     search_parser.add_argument("--search_limit", type=int, default=5, help="set hit list limit (standard=5)")
     
     build_parser = subparsers.add_parser("build", help="builds the inverted index for movies")
-    build_parser = subparsers.add_parser("test", help="tests specific functions and methods")
-    build_parser = subparsers.add_parser("save", help="saves the built index to a temporary cache folder")
+    test_parser = subparsers.add_parser("test", help="tests specific functions and methods")
+    save_parser = subparsers.add_parser("save", help="saves the built index to a temporary cache folder")
+    
+    tf_parser = subparsers.add_parser("tf", help="prints the term frequency of a given term")
+    tf_parser.add_argument("doc_id", help="insert the document ID, which you want to analyse")
+    tf_parser.add_argument("term", help="insert a single term, you want to search")
 
     return parser
     
@@ -40,6 +45,12 @@ def main() -> None:
                 for i, search_result in enumerate(search_result, 1):
                     print(f"{i}. {search_result}")
         # case _ : else
+        case "tf":
+            tokenized_term = single_term_tokenizer(args.term)
+            inverted_index = InvertedIndex()
+            inverted_index.load()
+            print(inverted_index.get_tf(int(args.doc_id), tokenized_term))
+
         case "build":
             print(f"Building inverted index")
             inverted_index = InvertedIndex()
@@ -51,9 +62,13 @@ def main() -> None:
         
         case "test":
             inverted_index = InvertedIndex()
-            inverted_index.build()
-            print(inverted_index.index)
-            print(inverted_index.docmap)
+            inverted_index.load()
+            #inverted_index.build()
+            #print(inverted_index.index)
+            #print(inverted_index.docmap)
+            #print(inverted_index.term_frequencies)
+            print(inverted_index.get_tf(4999, "b"))
+            #print(inverted_index.get_tf(420, "fire"))
             # print("Testing")
             
             # inverted_index.add_document(20000000000000000000, "Hello, how are you, you and you?")
@@ -68,7 +83,6 @@ def main() -> None:
             inverted_index.save()
             print("saved")
 
-            
         case _:
             parser.print_help()
 
