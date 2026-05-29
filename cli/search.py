@@ -7,15 +7,18 @@ from search_utils import DEFAULT_SEARCH_LIMIT, load_movies, load_stopwords, proj
 from nltk.stem import PorterStemmer
 import pickle
 from collections import Counter
-
+from collections import defaultdict
 
 
 def test_text(text: str) -> str:
     return clean(text)
 
 def clean(query: str) -> str:
-    #remove_punctuation = str.maketrans("", "", string.punctuation)
-    remove_punctuation = str.maketrans(string.punctuation, ' ' * len(string.punctuation))
+    remove_punctuation = str.maketrans("", "", string.punctuation)
+    # removes punctuation entirely
+
+    #remove_punctuation = str.maketrans(string.punctuation, ' ' * len(string.punctuation))
+    # removes punctuation but also splits words 
     # make translation table, delete all punctuations:
     # string.punctuation = !"#$%&'()*+,-./:;<=>?@[]^_`{|}~\
     # make translation table, e.g. str.maketrans(from, to, delete)
@@ -91,7 +94,8 @@ def search_command(inverted_index, query: str, list_limit: int = DEFAULT_SEARCH_
 
 class InvertedIndex():
     def __init__(self): #OK
-        self.index = {} #a dictionary mapping tokens (strings) to sets of document IDs (integers)
+        #self.index = {} #a dictionary mapping tokens (strings) to sets of document IDs (integers)
+        self.index = defaultdict(set)
         self.docmap = {} #a dictionary mapping document IDs to their full document objects.
         self.term_frequencies = {}
         self.index_path = project_root / "cache" / "index.pkl"

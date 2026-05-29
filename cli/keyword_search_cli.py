@@ -22,6 +22,9 @@ def prepare_parser():
     tf_parser.add_argument("doc_id", help="insert the document ID, which you want to analyse")
     tf_parser.add_argument("term", help="insert a single term, you want to search")
 
+    tf_parser = subparsers.add_parser("idf", help="prints the term frequency of a given term")
+    tf_parser.add_argument("term", help="insert a single term, you want to search")
+
     return parser
     
 
@@ -50,6 +53,28 @@ def main() -> None:
             inverted_index = InvertedIndex()
             inverted_index.load()
             print(inverted_index.get_tf(int(args.doc_id), tokenized_term))
+        
+        case "idf":
+            import math
+            inverted_index = InvertedIndex()
+            inverted_index.load()
+            
+            matches = 0
+            tokenized_term = single_term_tokenizer(args.term)
+            
+            # try: 
+            #     matches = (len(inverted_index.index[tokenized_term]))
+            # except KeyError:
+            #     matches = 0
+            matches = len(inverted_index.index[tokenized_term])
+            print(matches)
+            print(tokenized_term)
+            idf = math.log((len(inverted_index.docmap) + 1) / (matches + 1))
+
+            #print(idf:.2f)
+            print(f"Inverse document frequency of '{args.term}': {idf:.2f}")
+            print(list(inverted_index.index["actor"])[:5])
+
 
         case "build":
             print(f"Building inverted index")
@@ -59,6 +84,7 @@ def main() -> None:
             print(inverted_index.index)
             test_list = inverted_index.get_document('merida')
             print(test_list)
+            
         
         case "test":
             inverted_index = InvertedIndex()
