@@ -1,13 +1,23 @@
 
-
 #always source .venv/bin/activate
+
+
+# import libraries
 import json
 import string
-from search_utils import DEFAULT_SEARCH_LIMIT, load_movies, load_stopwords, project_root, create_subfolder
+import math
+
 from nltk.stem import PorterStemmer
 import pickle
 from collections import Counter
 from collections import defaultdict
+
+# import helper functions
+from search_utils import load_movies, load_stopwords, project_root, create_subfolder
+#import constants
+from search_utils import DEFAULT_SEARCH_LIMIT, BM25_K1, BM25_B
+
+
 
 
 def test_text(text: str) -> str:
@@ -26,6 +36,14 @@ def clean(query: str) -> str:
     cleaned_query = query.translate(remove_punctuation).lower().strip()
     
     return cleaned_query
+
+def print_document(doc_id):
+    # prints the whole content of the document with the given document id
+    inverted_index = InvertedIndex()
+    inverted_index.load()
+    print(f"Length: {inverted_index.doc_lengths[doc_id]}")
+    print(inverted_index.docmap[doc_id])
+    
 
 def remove_stopwords(query_tokens: list[str]) -> list[str]:
     filtered_tokens = []
@@ -70,6 +88,21 @@ def single_term_tokenizer(text: str) -> list[str]:
         term = " ".join(tokenized_term_list)
         return term
 
+def bm25_idf_command(term: str) -> float:
+    inverted_index = InvertedIndex()
+    inverted_index.load()
+    tokenized_term = single_term_tokenizer(term)
+    bm25_idf = inverted_index.get_bm25_idf(tokenized_term)
+    return bm25_idf
+
+def bm25_tf_command(doc_id, term, k1=BM25_K1, b=BM25_B) -> float:
+    inverted_index = InvertedIndex()
+    inverted_index.load()
+    tokenized_term = single_term_tokenizer(term)
+    bm25_tf = inverted_index.get_bm25_tf(doc_id, tokenized_term, k1, b)
+
+    return bm25_tf
+    
 def search_command(inverted_index, query: str, list_limit: int = DEFAULT_SEARCH_LIMIT) -> list[dict]:
     
     query = text_pipeline(query)
@@ -91,21 +124,21 @@ def search_command(inverted_index, query: str, list_limit: int = DEFAULT_SEARCH_
                 return search_result
     return search_result
 
-
 class InvertedIndex():
     def __init__(self): #OK
         #self.index = {} #a dictionary mapping tokens (strings) to sets of document IDs (integers)
         self.index = defaultdict(set)
         self.docmap = {} #a dictionary mapping document IDs to their full document objects.
         self.term_frequencies = {}
+        self.doc_lengths = {}
         self.index_path = project_root / "cache" / "index.pkl"
         self.docmap_path = project_root / "cache" / "docmap.pkl"
         self.term_frequencies_path = project_root / "cache" / "term_frequencies.pkl"
+        self.doc_lengths_path = project_root / "cache" / "doc_lengths.pkl"
         print("Objekt succesfully created")
     
     def load(self):        
         #load index-file
-    
         with open(self.index_path, 'rb') as file:
             f = pickle.load(file)
             self.index = f
@@ -116,12 +149,21 @@ class InvertedIndex():
         with open(self.term_frequencies_path, 'rb') as file:
             f = pickle.load(file)
             self.term_frequencies = f
+        with open(self.doc_lengths_path, 'rb') as file:
+            f = pickle.load(file)
+            self.doc_lengths = f
+        print("index, docmap, term frequencies & doc lengths loaded")
                 
-    def add_document(self, doc_id, text): #TODO
-        text = text_pipeline(text)
+    def add_document(self, doc_id, text):
+        #add document to docID
+        text = text_pipeline(text) #tokenize text
+        total_tokens = 0
         if doc_id not in self.term_frequencies:
             self.term_frequencies[doc_id] = Counter()
-        
+        if doc_id not in self.doc_lengths:
+            self.doc_lengths[doc_id] = 0
+        self.doc_lengths[doc_id] = len(text)
+    
         for token in text:
             self.term_frequencies[doc_id][token] += 1
             #self.index.setdefault(token, set()).add(doc_id)
@@ -135,8 +177,8 @@ class InvertedIndex():
         #print(self.index)
         
 
-    def get_document(self, term): #TODO
-        
+    def get_document(self, term):
+        #returns document IDs of search term from movie-list
         sorted_movie_id_list = []
         if term in self.index:
             return sorted(list(self.index[term]))
@@ -198,11 +240,50 @@ class InvertedIndex():
                 pickle.dump(self.docmap, file)
             with open(self.term_frequencies_path, 'wb') as file:
                 pickle.dump(self.term_frequencies, file)
+            with open(self.doc_lengths_path, 'wb') as file:
+                pickle.dump(self.doc_lengths, file)
+                
         except IOError as e:
             print(f"Error saving file: {e}")
 
     def get_tf(self, doc_id, term):
         return self.term_frequencies[doc_id][term]
+    
+    def get_bm25_idf(self, term:str) -> float:
+        #calculates the bm25_idf, improved and smoothed tf_idf rate
+        N = len(self.docmap)
+        df = len(self.index[term])
+        bm25_idf = math.log((N - df + 0.5) / (df + 0.5) + 1)
+        # N - df + 0.5: Count of documents WITHOUT the term
+        # / df: Count of documents WITH the term
+        # +0.5: smoothing, so you don't have division by 0
+        # log: smoothes the curve for large numbers
+        
+        return bm25_idf
+
+    def get_bm25_tf(self, doc_id:int, term:str, k1=BM25_K1, b = BM25_B) -> float:
+        doc_length = self.doc_lengths[doc_id]
+        avg_doc_length = self.__get_avg_doc_length()
+        length_norm = 1 - b + b * (doc_length / avg_doc_length)
+        
+        tf = self.get_tf(doc_id, term)
+        #bm25 formula for tf-saturation
+        #bm25_tf = (tf * (k1 + 1)) / (tf + k1)
+        bm25_tf_norm = (tf * (k1 + 1)) / (tf + k1 * length_norm)
+
+        return bm25_tf_norm
+    
+    def __get_avg_doc_length(self) -> float:
+        # calculates and returns the average document-length
+        N = len(self.doc_lengths) #N = total document count        
+        avg_doc_length = None
+        if N < 1: return 0.0
+        else:
+            total_doc_length = sum(self.doc_lengths.values())
+            avg_doc_length = total_doc_length / N
+            
+        return avg_doc_length
+        
         
 #CALLS: only once by executing search.py
 stopwords = load_stopwords()

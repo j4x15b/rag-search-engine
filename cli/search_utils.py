@@ -5,6 +5,10 @@ from functools import lru_cache
 # output movie count
 DEFAULT_SEARCH_LIMIT = 5
 
+# BM25_TFIDF constants
+BM25_K1 = 1.5
+BM25_B = 0.75
+
 #setting data_paths
 project_root = Path(__file__).parent.parent
 movie_data_path = project_root / "data" / "movies.json"
