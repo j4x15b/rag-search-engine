@@ -135,7 +135,7 @@ class InvertedIndex():
         self.docmap_path = project_root / "cache" / "docmap.pkl"
         self.term_frequencies_path = project_root / "cache" / "term_frequencies.pkl"
         self.doc_lengths_path = project_root / "cache" / "doc_lengths.pkl"
-        print("Objekt succesfully created")
+        print("debug: InvertedIndex-object succesfully created")
     
     def load(self):        
         #load index-file
@@ -283,6 +283,32 @@ class InvertedIndex():
             avg_doc_length = total_doc_length / N
             
         return avg_doc_length
+    
+    def bm25(self, doc_id, term) -> float:
+        # calculates and returns the bm25 score of a given document and term-pair
+        bm25 = self.get_bm25_tf(doc_id, term) * self.get_bm25_idf(term)
+        return bm25
+    
+    def bm25_search(self, query:str, limit=5):
+        # performs bm25_search and returns the top results
+        tokenized_query = text_pipeline(query)
+        score_dict = {} #score dictionary with document IDs:bm25-score
+        
+        for token in tokenized_query:
+            for doc_id in self.docmap:            
+                bm25_score = self.bm25(doc_id, token)
+                if doc_id == 2275:
+                    print(f"token={token}, doc_id={doc_id}, score={bm25_score}")
+                #print(token, doc_id, bm25_score)            
+                if doc_id not in score_dict:
+                    score_dict[doc_id] = 0
+                score_dict[doc_id] += bm25_score
+        print(score_dict[2275])
+        sorted_dict = {k: v for k, v in sorted(score_dict.items(), reverse=True, key=lambda item: item[1])}
+        #print(sorted_dict)
+        items = list(sorted_dict.items())
+        
+        return items[:limit]
         
         
 #CALLS: only once by executing search.py

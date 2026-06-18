@@ -41,6 +41,10 @@ def prepare_parser():
     bm25_tf_parser.add_argument("k1", type=float, nargs='?', default=BM25_K1, help="Tunable BM25 K1 parameter")
     bm25_tf_parser.add_argument("b", type=float, nargs='?', default=BM25_B, help="Tunable BM25 b parameter")
 
+    bm25search_parser = subparsers.add_parser("bm25search", help="Search movies using full BM25 scoring")
+    bm25search_parser.add_argument("query", type=str, help="Search query")
+    bm25search_parser.add_argument("--limit", type=int, default=5, help="limits result list (standard: 5)")
+
     print_document_parser = subparsers.add_parser("print", help="Prints a whole document with a given document number")
     print_document_parser.add_argument("doc_id", type=int, help="#Document ID")
 
@@ -120,16 +124,30 @@ def main() -> None:
             idf = math.log((len(inverted_index.docmap) + 1) / (matches + 1))
             tf_idf = tf * idf
             #print(tf_idf)
-            print(f"TF-IDF score of '{args.term}' in document '{args.doc_id}': {tf_idf:.2f}")
+            #print(f"TF-IDF score of '{args.term}' in document '{args.doc_id}': {tf_idf:.2f}")
+            print(f"TF-IDF score of '{args.term}' in document '{args.doc_id}': {tf_idf}")
         
         case "bm25idf":
             bm25idf = bm25_idf_command(args.term)
-            print(f"BM25 IDF score of '{args.term}': {bm25idf:.2f}")
+            #print(f"BM25 IDF score of '{args.term}': {bm25idf:.2f}")
+            print(f"BM25 IDF score of '{args.term}': {bm25idf}")
 
         case "bm25tf":
             bm25_tf = bm25_tf_command(args.doc_id, args.term, args.k1)
-            print(f"BM25 TF score of '{args.term}' in document '{args.doc_id}': {bm25_tf:.2f}")
+            #print(f"BM25 TF score of '{args.term}' in document '{args.doc_id}': {bm25_tf:.2f}")
+            print(f"BM25 TF score of '{args.term}' in document '{args.doc_id}': {bm25_tf}")
         
+        case "bm25search":
+            limit = args.limit
+
+            inverted_index = InvertedIndex()
+            inverted_index.load()
+            result_items = inverted_index.bm25_search(args.query, args.limit)
+
+            for i in range(min(limit, len(result_items))):
+                doc_id, score = result_items[i]
+                print(f"{i+1}. ({doc_id}) {inverted_index.docmap[doc_id]['title']} - Score: {score:.2f}")
+
         case "print":
             full_document = print_document(args.doc_id)
 
