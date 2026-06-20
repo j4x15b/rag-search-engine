@@ -24,7 +24,8 @@ def test_text(text: str) -> str:
     return clean(text)
 
 def clean(query: str) -> str:
-    remove_punctuation = str.maketrans("", "", string.punctuation)
+    #remove_punctuation = str.maketrans("", "", string.punctuation)
+    
     # removes punctuation entirely
 
     #remove_punctuation = str.maketrans(string.punctuation, ' ' * len(string.punctuation))
@@ -33,8 +34,13 @@ def clean(query: str) -> str:
     # string.punctuation = !"#$%&'()*+,-./:;<=>?@[]^_`{|}~\
     # make translation table, e.g. str.maketrans(from, to, delete)
     # str.maketrans("aeiou", "AEIOU", "!?.")
-    cleaned_query = query.translate(remove_punctuation).lower().strip()
     
+    
+    #cleaned_query = query.translate(remove_punctuation).lower().strip()
+    
+    lowered_query = query.lower()
+    cleaned_query = lowered_query.translate(str.maketrans("", "", string.punctuation))
+
     return cleaned_query
 
 def print_document(doc_id):
@@ -210,10 +216,10 @@ class InvertedIndex():
         # Have this method create the cache directory if it doesn't exist (before trying to write files into it).
         print("saving file method")
 
-        # if create_subfolder("cache"):
-        #     print("Folder already exists")
-        # else:
-        #     print("Cache folder created")
+        if create_subfolder("cache"):
+            print("Folder already exists")
+        else:
+            print("Cache folder created")
         
         #if self.index_path.exists() or self.docmap_path.exists():
             # loop = True
@@ -245,6 +251,8 @@ class InvertedIndex():
                 
         except IOError as e:
             print(f"Error saving file: {e}")
+        except Error as e:
+            print(f"Standard Error: {e}")
 
     def get_tf(self, doc_id, term):
         return self.term_frequencies[doc_id][term]
@@ -306,8 +314,17 @@ class InvertedIndex():
         print(score_dict[2275])
         sorted_dict = {k: v for k, v in sorted(score_dict.items(), reverse=True, key=lambda item: item[1])}
         #print(sorted_dict)
+
+        print(f"avg_doc_length: {self.__get_avg_doc_length()}")
+        print(f"doc_length 2275: {self.doc_lengths[2275]}")
+
         items = list(sorted_dict.items())
         
+        print(self.doc_lengths[2275])
+
+        print(f"total docs: {len(self.docmap)}")
+        print(f"total length: {sum(self.doc_lengths.values())}")
+
         return items[:limit]
         
         

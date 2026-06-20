@@ -1,3 +1,5 @@
+# here we got a classic keyword search engine
+
 # always: source .venv/bin/activate
 
 import argparse
@@ -78,7 +80,7 @@ def main() -> None:
             inverted_index = InvertedIndex()
             inverted_index.build()
             inverted_index.save()
-            print(inverted_index.index)
+            #print(inverted_index.index)
             test_list = inverted_index.get_document('merida')
             print(test_list)
 
