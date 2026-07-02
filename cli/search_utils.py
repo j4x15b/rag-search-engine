@@ -11,8 +11,10 @@ BM25_B = 0.75
 
 #setting data_paths
 project_root = Path(__file__).parent.parent
+cache_path = project_root / "cache"
 movie_data_path = project_root / "data" / "movies.json"
 stopwords_data_path = project_root / "data" / "stopwords.txt"
+
 
 #creating subpath
 
@@ -23,7 +25,7 @@ def create_subfolder(folder_name: str) -> bool:
         return True
     else:
         print(f"creating folder: {folder_name}")
-        target.mkdir()
+        target.mkdir(parents=True)
         return False
 
 # load  movie data base
