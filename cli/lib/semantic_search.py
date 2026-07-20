@@ -25,7 +25,70 @@ def search_command(query, limit=5):
     semantic_search.load_or_create_embeddings(movie_list)
     results = semantic_search.search(query, limit)
     for i, result in enumerate(results):
-        print(f"{i+1}. {result["title"]} (score: {result["score"]:.4f}) \n {result["description"]}\n\n")
+        #print(f"{i+1}. {result["title"]} (score: {result["score"]:.4f}) \n {result["description"]}\n\n")
+        print(f"{i+1}. {result["title"]} (score: {result["score"]:.4f}) \n")
+
+def chunk_command(text, chunk_size, overlap):
+    print(chunk_size)
+    text_list = text.split()
+    chunk_list = []
+    chunk_string = ""
+    i = 0
+    print(text_list)
+    while i <= len(text_list):
+        if i==0:
+            start = 0
+            end = start+chunk_size
+            #end = start+chunk_size+overlap
+            #print(f"start: {start}, end: {end}")
+        if i>0:
+            start = i-overlap
+            if start < 0: start = 0
+            end = start+chunk_size+overlap
+            if end > len(text_list): end = len(text_list)
+            #print(f"start: {start}, end: {end}")
+        #chunk = text_list[start:end]
+        #chunk = " ".join(chunk)
+        chunk = " ".join(text_list[start:end])
+        #print(f"chunk: {chunk}")
+        if chunk: 
+            chunk_list.append(chunk)
+        print(i)
+        i = i + chunk_size
+
+        return text_list
+        
+def semantic_chunk_command(text, max_chunk_size, overlap):
+    import re
+    print("SEMANTIC CHUNKING")
+    chunk_list = []
+    text_list = re.split(r"(?<=[.!?])\s+",text)
+    #print(text_list)
+    chunk_size = max_chunk_size
+    chunk_string = ""
+    
+    #schleife
+    start = 0
+    end = start + chunk_size
+    if overlap >= max_chunk_size:
+        overlap = max_chunk_size - 1
+        print(f"Overlap has been overwritten to {overlap}")
+        
+    while start <= len(text_list):
+        chunk = " ".join(text_list[start:end])
+        if chunk: chunk_list.append(chunk)
+        if end >= len(text_list): break
+        start = end - overlap #ende ist exklusiv, deshalb ist ende das nächste wort - minus overlap
+        end = start + chunk_size        
+    
+    #print(chunk_list)
+    #print("\n")
+    # Output text:
+    print(f"Semantically chunking {len(text)} characters")
+    for i, chunk in enumerate(chunk_list):
+        print(f"{i+1}. {chunk}")
+    
+    return chunk_list
 #####################################################################
 ## Working Methods
 #####################################################################
@@ -47,6 +110,8 @@ def embed_query(query):
 
 def cosine_similarity(vec1: np.ndarray, vec2: np.ndarray) -> float:
     #a fast way to calculate the cosine similarity of two vectors (1.0 -> same direction, 0.0 -> unrelated, -1.0 -> opposite direction)
+    #score = np.dot(query_embedding, doc_embedding)
+    #score = np.dot(query_embedding, embedding)
     dot_product = np.dot(vec1, vec2)
     norm1 = np.linalg.norm(vec1)
     norm2 = np.linalg.norm(vec2)
@@ -88,6 +153,7 @@ def verify_embeddings():
 class SemanticSearch():
     def __init__(self):
         self.model = SentenceTransformer('all-MiniLM-L6-v2', local_files_only=offline_mode)#, device="cpu")
+        #model = SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
         self.embeddings = None
         self.documents = None
         self.document_map = {}
@@ -96,13 +162,16 @@ class SemanticSearch():
         self.embeddings_path = cache_path / "movie_embeddings.npy"
 
     def generate_embedding(self, text):
-        if len(text) == 0 or (not text):
+        if not text:
             raise ValueError("Text is empty, please try again")
+        #else: return self.model.encode(text, normalize_embeddings=True, convert_to_numpy=True)
+
         else:
             text_list = []
             text_list.append(text)
             print(text_list)
             model_result = self.model.encode(text_list)
+            #embedding = model.encode(texts, normalize_embeddings=True, convert_to_numpy=True)
             #print("#-0.035")
             return model_result[0]
 
@@ -115,6 +184,7 @@ class SemanticSearch():
             document_string = f"{document['title']}: {document['description']}"
             document_list.append(document_string)
         self.embeddings = self.model.encode(document_list, show_progress_bar=True, batch_size=64)
+        #self.embeddings = self.model.encode(document_list,show_progress_bar=True,batch_size=64,normalize_embeddings=True,convert_to_numpy=True)
         
         #check cache-dir and save
         create_subfolder("cache")
