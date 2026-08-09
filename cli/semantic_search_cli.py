@@ -16,6 +16,7 @@ from lib.semantic_search import embed_query
 from lib.semantic_search import search_command
 from lib.semantic_search import chunk_command
 from lib.semantic_search import semantic_chunk_command
+from lib.semantic_search import embed_chunks_command
 
 
 def positive_int(value):
@@ -52,6 +53,8 @@ def main() -> None:
     semantic_chunk_parser.add_argument("--max-chunk-size", type=positive_int, default=4, help="defines the size of a chunk in full sentences, default=4")
     semantic_chunk_parser.add_argument("--overlap", type=positive_int, default=0, help="defines an overlap in #amount of characters")
     
+    embed_chunks_parser = subparsers.add_parser("embed_chunks", help="chunkes the description text and embeds the chunks")
+    
 
     verify_embeddings_parser = subparsers.add_parser("verify_embeddings", help="Verifies, that the shape and size of the embeddings fit")
 
@@ -66,7 +69,14 @@ def main() -> None:
             chunk_command(args.text, args.chunk_size, args.overlap)
         
         case "semantic_chunk":
-            semantic_chunk_command(args.text, args.max_chunk_size, args.overlap)
+            chunk_list = semantic_chunk_command(args.text, args.max_chunk_size, args.overlap)
+            # Output text:
+            # print(f"Semantically chunking {len(args.text)} characters")
+            # for i, chunk in enumerate(chunk_list):
+            #     print(f"{i+1}. {chunk}")
+
+        case "embed_chunks":
+            embed_chunks_command()
         
         case "verify":
             verify_model()

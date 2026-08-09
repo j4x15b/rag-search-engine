@@ -60,35 +60,75 @@ def chunk_command(text, chunk_size, overlap):
         
 def semantic_chunk_command(text, max_chunk_size, overlap):
     import re
-    print("SEMANTIC CHUNKING")
+    #print("SEMANTIC CHUNKING")
     chunk_list = []
     text_list = re.split(r"(?<=[.!?])\s+",text)
     #print(text_list)
     chunk_size = max_chunk_size
     chunk_string = ""
     
-    #schleife
-    start = 0
-    end = start + chunk_size
     if overlap >= max_chunk_size:
         overlap = max_chunk_size - 1
         print(f"Overlap has been overwritten to {overlap}")
         
-    while start <= len(text_list):
+    #statistical chunking: measure text length and sentence length to produce comparable chunks
+    #sentences = re.split(r"(?<=[.!?])\s+", text)
+    #avg_len = sum(len(s) for s in sentences) / len(sentences)
+    #total_len = len(text)
+
+    #semantical chunking: 
+    #Split into sentences.
+    #Embed each sentence into a vector.
+    #Walk through consecutive sentences and measure cosine similarity between neighbors.
+    #When similarity drops below a threshold, that's a topic shift, so cut a new chunk there.
+    
+    #split at meaning-boundaries 
+
+    # e.g. aim for chunks that hold a few "average" sentences
+    #target_len = avg_len * 4
+
+    # #schleife
+    # start = 0
+    # end = start + chunk_size
+    # 
+    # while version of the loop (outdated)
+    # while start <= len(text_list):
+    #     chunk = " ".join(text_list[start:end])
+    #     if chunk: chunk_list.append(chunk)
+    #     if end >= len(text_list): break
+    #     start = end - overlap #ende ist exklusiv, deshalb ist ende das nächste wort - minus overlap
+    #     end = start + chunk_size        
+    
+    #calculating the amount of chunks:
+    import math
+    step = chunk_size - overlap
+    num_chunks = math.ceil((len(text_list) - overlap) / step)
+
+    #schleife
+    start = 0
+    end = start + chunk_size
+    for i in range(num_chunks):
+        #print(f"start: {start}, end: {end}")
         chunk = " ".join(text_list[start:end])
         if chunk: chunk_list.append(chunk)
-        if end >= len(text_list): break
-        start = end - overlap #ende ist exklusiv, deshalb ist ende das nächste wort - minus overlap
-        end = start + chunk_size        
-    
-    #print(chunk_list)
-    #print("\n")
-    # Output text:
-    print(f"Semantically chunking {len(text)} characters")
-    for i, chunk in enumerate(chunk_list):
-        print(f"{i+1}. {chunk}")
-    
+
+        #calculating new start and end:
+        start = start + step
+        end = start + chunk_size
+
     return chunk_list
+
+def embed_chunks_command():
+    # semantic_search = SemanticSearch()
+    chunked_semantic_search = ChunkedSemanticSearch()
+    movie_list = load_movies()
+    chunked_semantic_search.build_chunk_embeddings(movie_list)
+    """
+    results = semantic_search.search(query, limit)
+    for i, result in enumerate(results):
+        #print(f"{i+1}. {result["title"]} (score: {result["score"]:.4f}) \n {result["description"]}\n\n")
+        print(f"{i+1}. {result["title"]} (score: {result["score"]:.4f}) \n")
+    """
 #####################################################################
 ## Working Methods
 #####################################################################
@@ -147,13 +187,15 @@ def verify_embeddings():
 
 
 #####################################################################
-## Working Class (haha)
+## Working Classes (haha)
 #####################################################################
 
 class SemanticSearch():
-    def __init__(self):
-        self.model = SentenceTransformer('all-MiniLM-L6-v2', local_files_only=offline_mode)#, device="cpu")
-        #model = SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+    def __init__(self, model_name: str = "all-MiniLM-L6-v2") -> None:
+        #if self.model = SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+        self.model = SentenceTransformer(model_name, local_files_only=offline_mode)#, device="cpu"))
+        #self.model = SentenceTransformer('all-MiniLM-L6-v2', local_files_only=offline_mode)#, device="cpu")
+        
         self.embeddings = None
         self.documents = None
         self.document_map = {}
@@ -234,16 +276,66 @@ class SemanticSearch():
             full_movie_list.sort(key=lambda item: item["score"], reverse=True)
             
             return full_movie_list[0:limit]
+
+#sublasses 
+
+class ChunkedSemanticSearch(SemanticSearch):
+    def __init__(self, model_name: str = "all-MiniLM-L6-v2") -> None:
+        #super().__init__(model_name)
+        super().__init__()
+        self.chunk_embeddings = None
+        self.chunk_metadata = None
+
+    def build_chunk_embeddings(self, documents: list[dict]) -> np.ndarray:
+        self.documents = documents
+        chunk_list = [] #string
+        list_of_all_chunks = [] #string
+        chunk_metadata_list = [] #dict
+        i = 1
+        for document in documents:
+            if document["id"]>2: continue
+            else:
+            # this is working with the given movie-dictionaries
+                if not document['description']: continue
+                else:
+                    self.document_map[document["id"]] = document
+                    #print(document['id'])
+                    #print('\n')
+                    #print(document['description'])
+                    
+                    chunk_list = semantic_chunk_command(document['description'], 4, 1)
+                    for i, chunk in enumerate(chunk_list):
+                        list_of_all_chunks.append(chunk)
+                        chunk_metadata_list.append(
+                            {
+                                "movie_idx":document["id"],
+                                "chunk_idx":i,
+                                "total_chunks":len(chunk_list),
+                            })
+                    #print(chunk_list[0])
+                    #print(chunk_list)
+                    i += 1
             
+        # print(len(self.document_map))
+        # print(chunk_metadata_list)
+        # print(len(list_of_all_chunks))
+        print(list_of_all_chunks[0:4])
+        # #ab hier: alle chunks embedden
+        self.chunk_embeddings = self.model.encode(list_of_all_chunks)
+        print(self.chunk_embeddings)
+        #print(self.chunk_embeddings)
+        #ab hier: alle chunks embedden
+        #for chunk in chunk_list:
+        #    print(chunk)
+            # self.document_map[document["id"]] = document
+            # document_string = f"{document['title']}: {document['description']}"
+            # document_list.append(document_string)
+        #self.chunk_embeddings = self.model.encode(chunk_list, show_progress_bar=True, batch_size=64)
         
 
-        """
-        print("Building index and Docmap")
-        movie_data = load_movies()
-        # movie_data is a list of dicts{'id', 'title', 'description'}
-        for movie in movie_data:
-            doc_id = movie['id']
-            movie_text = f"{movie['title']} {movie['description']}"
-            self.docmap[doc_id] = movie
-            self.add_document(doc_id, movie_text)
-"""
+        
+        #check cache-dir and save
+        # create_subfolder("cache")
+        # np.save(self.embeddings_path, self.embeddings)
+        
+        #return self.embeddings
