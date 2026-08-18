@@ -17,6 +17,9 @@ from lib.semantic_search import search_command
 from lib.semantic_search import chunk_command
 from lib.semantic_search import semantic_chunk_command
 from lib.semantic_search import embed_chunks_command
+from lib.semantic_search import verify_chunk_embeddings
+from lib.semantic_search import build_chunk_embeddings
+from lib.semantic_search import search_chunked_command
 
 
 def positive_int(value):
@@ -53,10 +56,17 @@ def main() -> None:
     semantic_chunk_parser.add_argument("--max-chunk-size", type=positive_int, default=4, help="defines the size of a chunk in full sentences, default=4")
     semantic_chunk_parser.add_argument("--overlap", type=positive_int, default=0, help="defines an overlap in #amount of characters")
     
-    embed_chunks_parser = subparsers.add_parser("embed_chunks", help="chunkes the description text and embeds the chunks")
+    embed_chunks_parser = subparsers.add_parser("embed_chunks", help="loads the embedded, chunked text or creates new chunks and re-embeds the text and saves it to chunk_embeddings.npy & chunk_metadata.json")
     
+    build_chunk_embeddings_parser = subparsers.add_parser("build_chunk_embeddings", help="deletes old files, chunks the input-text, encodes all chunks and saves them to chunk_embeddings.npy & chunk_metadata.json")
+    
+    search_chunked_parser = subparsers.add_parser("search_chunked", help="input search query and get the best matching results, with chunked and embedded search")
+    search_chunked_parser.add_argument("query", help="type in search query")
+    search_chunked_parser.add_argument("--limit", type=positive_int, default=5, help="defines a limit of maximal results, default=5")
 
     verify_embeddings_parser = subparsers.add_parser("verify_embeddings", help="Verifies, that the shape and size of the embeddings fit")
+    verify_chunk_embeddings_parser = subparsers.add_parser("verify_chunk_embeddings", help="Verifies, that the shape and size of the embeddings fit")
+    
 
     
     args = parser.parse_args()
@@ -78,6 +88,9 @@ def main() -> None:
         case "embed_chunks":
             embed_chunks_command()
         
+        case "build_chunk_embeddings":
+            build_chunk_embeddings()
+        
         case "verify":
             verify_model()
 
@@ -88,9 +101,17 @@ def main() -> None:
         case "embed_query":
             print(f"embedding text: {args.query}")
             embed_query(args.query)
+
+        case "search_chunked":
+            print(f"searching for {args.query}")
+            search_chunked_command(args.query)
+
         
         case "verify_embeddings":
             verify_embeddings()
+
+        case "verify_chunk_embeddings":
+            verify_chunk_embeddings()
         
         case _:
             parser.print_help()
