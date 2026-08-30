@@ -1,3 +1,6 @@
+#if I need better results: late chunking or ColBERT
+
+
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
 #no NVIDIA CUDA Devices, so it works with CPU
@@ -5,7 +8,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = ""
 #os.environ["HF_DATASETS_OFFLINE"] = "1"
 
 from sentence_transformers import SentenceTransformer
-from search_utils import load_movies, cache_path, create_subfolder
+from search_utils import load_movies, cache_path, create_subfolder, format_search_result
 
 import numpy as np
 
@@ -20,6 +23,7 @@ offline_mode = 1 #os.getenv("OFFLINE_MODE") == "1"
 def search_command(query, limit=5):
     #print("Hellooo")
     #print("LIMIT:", limit)
+    print(limit)
     semantic_search = SemanticSearch()
     movie_list = load_movies()
     semantic_search.load_or_create_embeddings(movie_list)
@@ -62,7 +66,20 @@ def semantic_chunk_command(text, max_chunk_size, overlap):
     import re
     #print("SEMANTIC CHUNKING")
     chunk_list = []
+    text = text.strip()
+    if not text:
+        print("Text is empty")
+        return chunk_list
     text_list = re.split(r"(?<=[.!?])\s+",text)
+    last_chunk = text_list[-1].strip()
+    print(last_chunk)
+    #if the text_list contains more than one chunk AND the last chunk has no punctuation mark: put the last and the second-last together
+    if len(text_list) > 1 and not re.search(r"[.!?]$", last_chunk):
+        print("Der String endet nicht mit einem Satzzeichen. Letzte Chunks zusammengefasst")
+        second_last_chunk = text_list[-2].strip()
+        text_list[-2] = f"{second_last_chunk} {last_chunk}"
+        text_list.pop()
+
     #print(text_list)
     chunk_size = max_chunk_size
     chunk_string = ""
@@ -145,7 +162,7 @@ def search_chunked_command(query: str, limit=5):
     movie_list = load_movies()
     chunked_semantic_search.load_or_create_chunk_embeddings(movie_list)
     results = chunked_semantic_search.search_chunks(query, limit)
-    
+    #print(results)
     for i, result in enumerate(results):
         print(f"\n{i+1}. {result['title']} (score: {result['score']:.4f})")
         print(f"   {result['document']}...")
@@ -386,6 +403,7 @@ class ChunkedSemanticSearch(SemanticSearch):
             return self.build_chunk_embeddings(documents)
 
     def search_chunks(self, query: str, limit: int = 10):
+        print(limit)
         embedded_query = self.generate_embedding(query)
         chunk_score = []
         if 0 == 1: raise ValueError("ERROR, ERROR, ERROR")
@@ -400,12 +418,14 @@ class ChunkedSemanticSearch(SemanticSearch):
                     "score" : float(chunk_cosine_score), #number of chunks in the movie
                 }
                 chunk_score.append(chunk_score_dict)
-                if i > 200: break
+                #if i > 200: break
 
         #print(chunk_score)
 
         movie_idx_score_dict = {}
         
+        # looking for max score
+        # Sum of Scores (with #chunks normalization), Average Score or Max Score - I use Max Score here
         for score in chunk_score:
             if score["movie_idx"] not in movie_idx_score_dict:
                 movie_idx_score_dict[score["movie_idx"]] = score["score"]
@@ -419,25 +439,11 @@ class ChunkedSemanticSearch(SemanticSearch):
         #print(sorted_movie_idx_score_dict)
 
         result = dict(list(sorted_movie_idx_score_dict.items())[:limit])
-        
-        #full_result_dict = {}
-        full_result_list = []
-        #print(self.chunk_metadata)
-        for key, value in result.items():
-            full_result_list.append(
-            #full_result_dict[key] = {
-            {
-                "id": key,
-                "title": self.document_map[key]["title"],
-                "document": self.document_map[key]["description"][:100],
-                "score": round(value) #"score": round(value, SCORE_PRECISION),
-                #"metadata":  ???
-            })
-        #print(full_result_dict)
 
-        #return full_result_dict
-        print(full_result_list)
-        return full_result_list
+        formatted_result = format_search_result(result, self.document_map)
+        #full_result_dict = {}
+        
+        return formatted_result
 
         """ 
         {

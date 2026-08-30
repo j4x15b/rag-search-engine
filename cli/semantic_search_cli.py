@@ -79,11 +79,14 @@ def main() -> None:
             chunk_command(args.text, args.chunk_size, args.overlap)
         
         case "semantic_chunk":
+        #uv run ./cli/semantic_search_cli.py semantic_chunk " Leading and trailing spaces. Those are a problem " --max-chunk-size 1 --overlap 0
             chunk_list = semantic_chunk_command(args.text, args.max_chunk_size, args.overlap)
-            # Output text:
-            # print(f"Semantically chunking {len(args.text)} characters")
-            # for i, chunk in enumerate(chunk_list):
-            #     print(f"{i+1}. {chunk}")
+            print(chunk_list)
+            #Output text:
+            print(f"Semantically chunking {len(args.text)} characters")
+        
+            for i, chunk in enumerate(chunk_list):
+                print(f"{i+1}. {chunk}")
 
         case "embed_chunks":
             embed_chunks_command()
@@ -104,8 +107,8 @@ def main() -> None:
 
         case "search_chunked":
             print(f"searching for {args.query}")
-            search_chunked_command(args.query)
-
+            search_chunked_command(args.query, args.limit)
+            
         
         case "verify_embeddings":
             verify_embeddings()

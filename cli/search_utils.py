@@ -40,3 +40,23 @@ def load_stopwords(): # -> set(str)
     with open(stopwords_data_path, 'r', encoding='utf-8') as file:
         stopword_set = frozenset(line.strip() for line in file)
     return stopword_set
+
+# formatting search results
+
+def format_search_result(result, document_map):
+    #formatted_result = format_search_result(result, self.document_map, self.chunk_metadata)    
+    
+    result_list = []
+    #print(self.chunk_metadata)
+    for key, value in result.items():
+        result_list.append(
+        #full_result_dict[key] = {
+        {
+            "id": key,
+            "title": document_map[key]["title"],
+            "document": document_map[key]["description"][:100],
+            "score": round(value) #"score": round(value, SCORE_PRECISION),
+            #"metadata":  ???
+        })
+ 
+    return result_list
