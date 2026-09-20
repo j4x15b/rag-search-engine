@@ -8,7 +8,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = ""
 #os.environ["HF_DATASETS_OFFLINE"] = "1"
 
 from sentence_transformers import SentenceTransformer
-from search_utils import load_movies, cache_path, create_subfolder, format_search_result
+from .search_utils import load_movies, cache_path, create_subfolder, format_search_result
 
 import numpy as np
 
@@ -421,7 +421,6 @@ class ChunkedSemanticSearch(SemanticSearch):
                 #if i > 200: break
 
         #print(chunk_score)
-
         movie_idx_score_dict = {}
         
         # looking for max score
@@ -439,10 +438,10 @@ class ChunkedSemanticSearch(SemanticSearch):
         #print(sorted_movie_idx_score_dict)
 
         result = dict(list(sorted_movie_idx_score_dict.items())[:limit])
-
+        print(result)
         formatted_result = format_search_result(result, self.document_map)
         #full_result_dict = {}
-        
+        #print(formatted_result)
         return formatted_result
 
         """ 

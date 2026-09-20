@@ -3,11 +3,11 @@
 # always: source .venv/bin/activate
 
 import argparse
-from lib.search import search_command
-from lib.search import InvertedIndex
-from lib.search import print_document, test_text
-from lib.search import single_term_tokenizer
-from lib.search import bm25_idf_command, bm25_tf_command
+from lib.keyword_search import search_command
+from lib.keyword_search import InvertedIndex
+from lib.keyword_search import print_document, test_text
+from lib.keyword_search import single_term_tokenizer
+from lib.keyword_search import bm25_idf_command, bm25_tf_command
 import math
 
 from search_utils import BM25_K1, BM25_B

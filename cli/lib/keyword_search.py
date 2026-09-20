@@ -1,6 +1,6 @@
 
 #always source .venv/bin/activate
-
+#and then: uv run ./cli/...
 
 # import libraries
 import json
@@ -13,9 +13,9 @@ from collections import Counter
 from collections import defaultdict
 
 # import helper functions
-from search_utils import load_movies, load_stopwords, project_root, create_subfolder
+from .search_utils import load_movies, load_stopwords, project_root, create_subfolder
 #import constants
-from search_utils import DEFAULT_SEARCH_LIMIT, BM25_K1, BM25_B
+from .search_utils import DEFAULT_SEARCH_LIMIT, BM25_K1, BM25_B
 
 
 

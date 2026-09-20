@@ -10,7 +10,7 @@ BM25_K1 = 1.5
 BM25_B = 0.75
 
 #setting data_paths
-project_root = Path(__file__).parent.parent
+project_root = Path(__file__).parent.parent.parent
 cache_path = project_root / "cache"
 movie_data_path = project_root / "data" / "movies.json"
 stopwords_data_path = project_root / "data" / "stopwords.txt"
@@ -55,7 +55,7 @@ def format_search_result(result, document_map):
             "id": key,
             "title": document_map[key]["title"],
             "document": document_map[key]["description"][:100],
-            "score": round(value) #"score": round(value, SCORE_PRECISION),
+            "score": round(value, 4) #"score": round(value, SCORE_PRECISION),
             #"metadata":  ???
         })
  
