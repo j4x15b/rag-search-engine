@@ -8,9 +8,10 @@ from lib.keyword_search import InvertedIndex
 from lib.keyword_search import print_document, test_text
 from lib.keyword_search import single_term_tokenizer
 from lib.keyword_search import bm25_idf_command, bm25_tf_command
+from lib.search_utils import BM25_K1, BM25_B
 import math
 
-from search_utils import BM25_K1, BM25_B
+
 
 def prepare_parser():
     parser = argparse.ArgumentParser(description="Keyword Search CLI")
@@ -145,8 +146,10 @@ def main() -> None:
             inverted_index = InvertedIndex()
             inverted_index.load()
             result_items = inverted_index.bm25_search(args.query, args.limit)
-
-            for i in range(min(limit, len(result_items))):
+            #print(result_items)
+            #print(len(result_items))
+            #for i in range(min(limit, len(result_items))):
+            for i in range(len(result_items)):
                 doc_id, score = result_items[i]
                 print(f"{i+1}. ({doc_id}) {inverted_index.docmap[doc_id]['title']} - Score: {score:.2f}")
 

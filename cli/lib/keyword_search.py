@@ -305,27 +305,27 @@ class InvertedIndex():
         for token in tokenized_query:
             for doc_id in self.docmap:            
                 bm25_score = self.bm25(doc_id, token)
-                if doc_id == 2275:
-                    print(f"token={token}, doc_id={doc_id}, score={bm25_score}")
+                # if doc_id == 2275:
+                #     print(f"token={token}, doc_id={doc_id}, score={bm25_score}")
                 #print(token, doc_id, bm25_score)            
                 if doc_id not in score_dict:
                     score_dict[doc_id] = 0
                 score_dict[doc_id] += bm25_score
-        print(score_dict[2275])
+        #print(score_dict[2275])
         sorted_dict = {k: v for k, v in sorted(score_dict.items(), reverse=True, key=lambda item: item[1])}
         #print(sorted_dict)
 
-        print(f"avg_doc_length: {self.__get_avg_doc_length()}")
-        print(f"doc_length 2275: {self.doc_lengths[2275]}")
+        #print(f"avg_doc_length: {self.__get_avg_doc_length()}")
+        #print(f"doc_length 2275: {self.doc_lengths[2275]}")
 
         items = list(sorted_dict.items())
         
-        print(self.doc_lengths[2275])
+        #print(self.doc_lengths[2275])
 
         print(f"total docs: {len(self.docmap)}")
-        print(f"total length: {sum(self.doc_lengths.values())}")
+        #print(f"total length: {sum(self.doc_lengths.values())}")
 
-        return items[:limit]
+        return items [:limit]
         
         
 #CALLS: only once by executing search.py

@@ -403,7 +403,7 @@ class ChunkedSemanticSearch(SemanticSearch):
             return self.build_chunk_embeddings(documents)
 
     def search_chunks(self, query: str, limit: int = 10):
-        print(limit)
+        #print(limit)
         embedded_query = self.generate_embedding(query)
         chunk_score = []
         if 0 == 1: raise ValueError("ERROR, ERROR, ERROR")
@@ -438,7 +438,6 @@ class ChunkedSemanticSearch(SemanticSearch):
         #print(sorted_movie_idx_score_dict)
 
         result = dict(list(sorted_movie_idx_score_dict.items())[:limit])
-        print(result)
         formatted_result = format_search_result(result, self.document_map)
         #full_result_dict = {}
         #print(formatted_result)

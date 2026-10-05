@@ -1,9 +1,12 @@
 import json
 from pathlib import Path
 from functools import lru_cache
+import string
 
 # output movie count
 DEFAULT_SEARCH_LIMIT = 5
+DEFAULT_TEXT_LENGTH = 200
+
 
 # BM25_TFIDF constants
 BM25_K1 = 1.5
@@ -38,7 +41,9 @@ def load_movies() -> list[dict]:
 @lru_cache(maxsize=None)
 def load_stopwords(): # -> set(str)
     with open(stopwords_data_path, 'r', encoding='utf-8') as file:
-        stopword_set = frozenset(line.strip() for line in file)
+        #stopword_set = frozenset(line.strip() for line in file)
+        stopword_set = frozenset(line.strip().lower().translate(str.maketrans("", "", string.punctuation)) for line in file)
+        #returns lowered, stripped stopwords with removed punctuation
     return stopword_set
 
 # formatting search results
