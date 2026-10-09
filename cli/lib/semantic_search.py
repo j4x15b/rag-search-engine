@@ -402,8 +402,7 @@ class ChunkedSemanticSearch(SemanticSearch):
         else:
             return self.build_chunk_embeddings(documents)
 
-    def search_chunks(self, query: str, limit: int = 10):
-        #print(limit)
+    def search_chunks(self, query: str, limit: int = 10):#proceeds a search for the query in the chunked, embedded data
         embedded_query = self.generate_embedding(query)
         chunk_score = []
         if 0 == 1: raise ValueError("ERROR, ERROR, ERROR")

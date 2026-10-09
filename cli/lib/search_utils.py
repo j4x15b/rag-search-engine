@@ -6,6 +6,7 @@ import string
 # output movie count
 DEFAULT_SEARCH_LIMIT = 5
 DEFAULT_TEXT_LENGTH = 200
+FULL_TEXT_LENGTH = None
 
 
 # BM25_TFIDF constants
