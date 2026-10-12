@@ -2,7 +2,7 @@ import argparse
 from lib.hybrid_search import normalize
 from lib.hybrid_search import weighted_search_command
 from lib.hybrid_search import rrf_search_command
-
+from lib.cross_encoder_reranker import CrossEncoderReranker
 
 def main() -> None:
 
@@ -26,7 +26,7 @@ def main() -> None:
     rrf_search_parser.add_argument("-k", type=int, default=60, help='the k-parameter controls the weight, that is given to ranks - lower k (20) gives more weight to top-ranked-results, higher k (100) gives lower ranked results more influence')
     rrf_search_parser.add_argument("--limit", type=int, default=5, help=help_limit)
     rrf_search_parser.add_argument("--enhance", type=str, choices=["spell", "rewrite", "expand"], help="Query enhancement method")
-    rrf_search_parser.add_argument("--rerank-method", type=str, choices=["individual"], help="reranks the results for you")
+    rrf_search_parser.add_argument("--rerank-method", type=str, choices=["individual", "batch", "cross_encoder"], help="reranks the results for you")
 
     args = parser.parse_args()
 
@@ -47,7 +47,10 @@ def main() -> None:
             weighted_search_command(args.query, args.alpha, args.limit)
 
         case "rrf-search":
-            rrf_search_command(args.query, args.k, args.limit, args.enhance, args.rerank_method)
+            reranker = None
+            if args.rerank_method == "cross_encoder":
+                reranker = CrossEncoderReranker()
+            rrf_search_command(args.query, args.k, args.limit, args.enhance, args.rerank_method, reranker)
 
         case _:
             parser.print_help()

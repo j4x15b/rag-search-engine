@@ -60,7 +60,8 @@ def format_search_result(result, document_map):
         {
             "id": key,
             "title": document_map[key]["title"],
-            "document": document_map[key]["description"][:100],
+            "description": document_map[key]["description"],
+            #"document": document_map[key]["description"],
             "score": round(value, 4) #"score": round(value, SCORE_PRECISION),
             #"metadata":  ???
         })
