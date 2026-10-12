@@ -19,6 +19,9 @@ use it as a intelligent search.
 ##########################################
 
 Readme:
+Status: Search engine works, keyword, semantic and hybrid search retrieve useful data. 
+        LLM-support for enhanced search queries and re-ranking works
+next steps: augmented generation
 
 source:
 [movie-database from boot.dev](https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/course-rag-movies.json)
