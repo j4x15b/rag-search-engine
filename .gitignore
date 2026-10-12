@@ -9,9 +9,12 @@ wheels/
 # Virtual environments
 .venv
 
-# data
-/data/
-/cache/
-
+# environments and secrets
 .env
+*.env
+**/api_key.env
 .streamlit/secrets.toml
+
+# local data
+/cache/
+# /data/
