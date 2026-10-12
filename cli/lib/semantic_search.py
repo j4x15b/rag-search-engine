@@ -14,7 +14,7 @@ import numpy as np
 
 # Load the model (downloads automatically the first time)
 
-offline_mode = 1 #os.getenv("OFFLINE_MODE") == "1"
+offline_mode = 0 #os.getenv("OFFLINE_MODE") == "1"
 
 #####################################################################
 ## CLI Methods
