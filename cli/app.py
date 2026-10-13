@@ -1,5 +1,5 @@
 import streamlit as st
-from lib.search_utils import load_movies
+from lib.search_utils import load_movies, ensure_hf_cache
 from lib.keyword_search import InvertedIndex
 from lib.semantic_search import ChunkedSemanticSearch
 from lib.hybrid_search import HybridSearch
@@ -12,6 +12,20 @@ st.set_page_config(
     #page_icon="",
     layout="wide",
 )
+
+# Load the prebuilt cache before initializing search objects. This prevents
+# Streamlit from rebuilding embeddings/indexes on its CPU-limited instance.
+try:
+    hf_token = st.secrets.get("HF_TOKEN", None)
+except Exception:
+    hf_token = None
+
+try:
+    ensure_hf_cache(token=hf_token)
+except Exception as exc:
+    st.error(f"Der Such-Cache konnte nicht geladen werden: {exc}")
+    st.stop()
+
 tab_suche, tab_filme = st.tabs(["Suche", "Filmarchiv"])
 
 

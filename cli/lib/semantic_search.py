@@ -375,6 +375,7 @@ class ChunkedSemanticSearch(SemanticSearch):
         print(len(self.chunk_embeddings))
         #save embedded chunk list and metadata
         print("Saving...")
+        create_subfolder("cache")
         np.save(self.chunk_embeddings_path, self.chunk_embeddings)
         import json
         with open(self.chunk_metadata_path, "w") as f:
