@@ -14,7 +14,7 @@ BM25_K1 = 1.5
 BM25_B = 0.75
 
 #setting data_paths
-project_root = Path(__file__).resolve().parent.parent
+project_root = Path(__file__).resolve().parent.parent.parent
 cache_path = project_root / "cache"
 
 HF_CACHE_REPO_ID = "j4x15b/movie-search-cache"
